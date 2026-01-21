@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retrieveasy</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #app {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #30BC5B 0%, #28a745 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+        }
+
+        .header-content h1 {
+            font-size: 28px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 4px;
+        }
+
+        .header-content p {
+            font-size: 14px;
+            color: #5f6368;
+        }
+
+        /* Main Card */
+        .card {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e8eaed;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #30BC5B;
+            background: white;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Two Column Layout */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Checkbox Group */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .checkbox-group:hover {
+            background: #e8f5e9;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #30BC5B;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .btn-primary {
+            background: #30BC5B;
+            color: white;
+            box-shadow: 0 2px 4px rgba(48, 188, 91, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #28a745;
+            box-shadow: 0 4px 8px rgba(48, 188, 91, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #5f6368;
+            border: 2px solid #e8eaed;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #f8f9fa;
+            border-color: #dadce0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #30BC5B;
+        }
+
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border-left: 4px solid #2196f3;
+        }
+
+        /* Results Table */
+        .results-container {
+            margin-top: 24px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .results-count {
+            font-size: 14px;
+            color: #5f6368;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #e8eaed;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 16px;
+            text-align: left;
+            font-weight: 500;
+            font-size: 14px;
+            color: #202124;
+            border-bottom: 2px solid #e8eaed;
+        }
+
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        th.sortable:hover {
+            background: #e8f5e9;
+        }
+
+        .sort-indicator {
+            margin-left: 6px;
+            font-size: 12px;
+            color: #30BC5B;
+            font-weight: bold;
+        }
+
+        .citation-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #e8eaed;
+            font-size: 14px;
+            color: #5f6368;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .article-title {
+            color: #1a73e8;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .article-title:hover {
+            text-decoration: underline;
+        }
+
+        /* Export Button */
+        .export-section {
+            margin-top: 16px;
+            padding: 16px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .results-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+        }
+
+        /* Helper Text */
+        .helper-text {
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 4px;
+        }
+
+        .material-icons {
+            font-size: 20px;
+        }
+
+        /* Advanced Options Toggle */
+        .advanced-toggle {
+            margin: 24px 0;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.2s;
+        }
+
+        .advanced-toggle:hover {
+            background: #e8f5e9;
+        }
+
+        .advanced-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .advanced-content.open {
+            max-height: 500px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-icon">
+                <span class="material-icons">biotech</span>
+            </div>
+            <div class="header-content">
+                <h1>Retrieveasy</h1>
+                <p>Search on Pubmed and then export results to CSV for selected references</p>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div v-if="alertMessage" :class="['alert', `alert-${alertType}`]">
+            <span class="material-icons">
+                {{ alertType === 'success' ? 'check_circle' : alertType === 'error' ? 'error' : 'info' }}
+            </span>
+            <span>{{ alertMessage }}</span>
+        </div>
+
+        <!-- Search Form -->
+        <div class="card">
+            <div class="card-title">
+                <span class="material-icons">search</span>
+                Search PubMed
+            </div>
+
+            <form @submit.prevent="searchPubMed">
+                <div class="form-group">
+                    <label for="email">Your Email *</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        v-model="formData.email" 
+                        placeholder="required@by.ncbi"
+                        required
+                    >
+                    <div class="helper-text">Required by NCBI for polite API access</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="query">Search Query *</label>
+                    <textarea 
+                        id="query" 
+                        v-model="formData.query" 
+                        placeholder="e.g., CRISPR gene therapy, immunotherapy cancer, COVID-19 vaccine"
+                        required
+                    ></textarea>
+                    <div class="helper-text">Use keywords, Boolean operators (AND, OR), or PubMed syntax</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="maxResults">Max Results</label>
+                        <input 
+                            type="number" 
+                            id="maxResults" 
+                            v-model.number="formData.maxResults" 
+                            min="1" 
+                            max="500"
+                            placeholder="50"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="apiKey">NCBI API Key (Optional)</label>
+                        <input 
+                            type="text" 
+                            id="apiKey" 
+                            v-model="formData.apiKey" 
+                            placeholder="For faster requests"
+                        >
+                    </div>
+                </div>
+
+                <!-- Advanced Options -->
+                <div class="advanced-toggle" @click="showAdvanced = !showAdvanced">
+                    <span style="font-weight: 500; color: #202124;">
+                        <span class="material-icons" style="vertical-align: middle;">tune</span>
+                        Advanced Options
+                    </span>
+                    <span class="material-icons">
+                        {{ showAdvanced ? 'expand_less' : 'expand_more' }}
+                    </span>
+                </div>
+
+                <div class="advanced-content" :class="{ open: showAdvanced }">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="dateFrom">Date From</label>
+                            <input 
+                                type="text" 
+                                id="dateFrom" 
+                                v-model="formData.dateFrom" 
+                                placeholder="YYYY or YYYY/MM/DD"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dateTo">Date To</label>
+                            <input 
+                                type="text" 
+                                id="dateTo" 
+                                v-model="formData.dateTo" 
+                                placeholder="YYYY or YYYY/MM/DD"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                        <span v-if="isLoading" class="spinner"></span>
+                        <span v-else class="material-icons">search</span>
+                        {{ isLoading ? 'Searching...' : 'Search PubMed' }}
+                    </button>
+                    <button type="button" class="btn btn-secondary" @click="resetForm" :disabled="isLoading">
+                        <span class="material-icons">refresh</span>
+                        Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results -->
+        <div v-if="results.length > 0" class="card results-container">
+            <div class="results-header">
+                <div class="card-title">
+                    <span class="material-icons">article</span>
+                    Search Results
+                </div>
+                <div class="results-count">
+                    Found {{ results.length }} articles
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">
+                                <input 
+                                    type="checkbox" 
+                                    @change="toggleSelectAll"
+                                    :checked="selectedArticles.length === results.length && results.length > 0"
+                                    :indeterminate="selectedArticles.length > 0 && selectedArticles.length < results.length"
+                                    style="cursor: pointer; width: 20px; height: 20px; accent-color: #30BC5B;"
+                                >
+                            </th>
+                            <th @click="sortBy('PMID')" class="sortable">
+                                PMID
+                                <span v-if="sortColumn === 'PMID'" class="sort-indicator">
+                                    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                                </span>
+                            </th>
+                            <th @click="sortBy('Title')" class="sortable">
+                                Title
+                                <span v-if="sortColumn === 'Title'" class="sort-indicator">
+                                    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                                </span>
+                            </th>
+                            <th @click="sortBy('Citation_Count')" class="sortable">
+                                Citations
+                                <span v-if="sortColumn === 'Citation_Count'" class="sort-indicator">
+                                    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                                </span>
+                            </th>
+                            <th @click="sortBy('Authors')" class="sortable">
+                                Authors
+                                <span v-if="sortColumn === 'Authors'" class="sort-indicator">
+                                    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                                </span>
+                            </th>
+                            <th @click="sortBy('Journal')" class="sortable">
+                                Journal
+                                <span v-if="sortColumn === 'Journal'" class="sort-indicator">
+                                    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                                </span>
+                            </th>
+                            <th @click="sortBy('Year')" class="sortable">
+                                Year
+                                <span v-if="sortColumn === 'Year'" class="sort-indicator">
+                                    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                                </span>
+                            </th>
+                            <th>Links</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="article in sortedResults" :key="article.PMID">
+                            <td style="text-align: center;">
+                                <input 
+                                    type="checkbox" 
+                                    @change="toggleArticleSelection(article.PMID)"
+                                    :checked="selectedArticles.includes(article.PMID)"
+                                    style="cursor: pointer; width: 20px; height: 20px; accent-color: #30BC5B;"
+                                >
+                            </td>
+                            <td>{{ article.PMID }}</td>
+                            <td>
+                                <a :href="article.PubMed_URL" target="_blank" class="article-title">
+                                    {{ article.Title }}
+                                </a>
+                            </td>
+                            <td style="text-align: center;">
+                                <span v-if="article.Citation_Count !== 'N/A'" class="citation-badge" 
+                                      :style="{ backgroundColor: getCitationColor(article.Citation_Count) }">
+                                    {{ article.Citation_Count }}
+                                </span>
+                                <span v-else style="color: #999;">-</span>
+                            </td>
+                            <td>{{ article.Authors }}</td>
+                            <td>{{ article.Journal }}</td>
+                            <td>{{ article.Year }}</td>
+                            <td>
+                                <a v-if="article.DOI_Link !== 'N/A'" :href="article.DOI_Link" target="_blank" class="article-title">
+                                    DOI
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="export-section">
+                <div>
+                    <strong>Selected: {{ selectedArticles.length }} of {{ results.length }} articles</strong>
+                    <div class="helper-text">Check articles above to select which ones to download as CSV</div>
+                </div>
+                <button class="btn btn-primary" @click="exportToCSV" :disabled="selectedArticles.length === 0">
+                    <span class="material-icons">download</span>
+                    Download CSV ({{ selectedArticles.length }})
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

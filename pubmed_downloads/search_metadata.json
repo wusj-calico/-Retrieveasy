@@ -1,0 +1,45 @@
+{
+  "search_query": "CRISPR gene editing",
+  "search_date": "2026-01-21T09:04:21.777738",
+  "total_results": 3,
+  "exported_articles": 3,
+  "csv_file": "pubmed_results_CRISPR_gene_editing_20260121.csv",
+  "articles": [
+    {
+      "pmid": "31295471",
+      "title": "CRISPR-Cas9 system: A new-fangled dawn in gene editing.",
+      "abstract": "Till date, only three techniques namely Zinc Finger Nuclease (ZFN), Transcription-Activator Like Effector Nucleases (TALEN) and Clustered Regularly Interspaced Short Palindromic Repeats-CRISPR-Associated 9 (CRISPR-Cas9) are available for targeted genome editing. CRISPR-Cas system is very efficient, fast, easy and cheap technique for achieving knock-out gene in the cell. CRISPR-Cas9 system refurbishes the targeted genome editing approach into a more expedient and competent way, thus facilitating ...",
+      "authors": "Gupta D, Bhattacharjee O, Mandal D",
+      "year": "2019",
+      "journal": "Life sciences",
+      "doi": "10.1016/j.lfs.2019.116636",
+      "doi_link": "https://doi.org/10.1016/j.lfs.2019.116636",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/31295471/",
+      "citation_count": 447
+    },
+    {
+      "pmid": "28254804",
+      "title": "Gene Editing With CRISPR/Cas9 RNA-Directed Nuclease.",
+      "abstract": "Genetic engineering of model organisms and cultured cells has for decades provided important insights into the mechanisms underlying cardiovascular development and disease. In the past few years the development of several nuclease systems has broadened the range of model/cell systems that can be engineered. Of these, the CRISPR (clustered regularly interspersed short palindromic repeats)/Cas9 (CRISPR-associated protein 9) system has become the favorite for its ease of application. Here we will r...",
+      "authors": "Doetschman T, Georgieva T",
+      "year": "N/A",
+      "journal": "Circulation research",
+      "doi": "10.1161/CIRCRESAHA.116.309727",
+      "doi_link": "https://doi.org/10.1161/CIRCRESAHA.116.309727",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/28254804/",
+      "citation_count": 111
+    },
+    {
+      "pmid": "30922545",
+      "title": "CRISPR-mediated gene editing for the surgeon scientist.",
+      "abstract": "Tremendous advances have occurred in gene editing during the past 20 years with the development of a number of systems. The Clustered Regularly Interspaced Short Palindromic Repeats (CRISPR)-associated protein 9 (Cas9) system represents an exciting area of research. This review examines both\u00a0the relevant studies pertaining to the history, current status, and modifications of this system, in\u00a0comparison with other gene-editing systems and future applications, and limitations of the CRISPR-Cas9 gen...",
+      "authors": "O'Brien SJ, Ekman MB, Manek S",
+      "year": "2019",
+      "journal": "Surgery",
+      "doi": "10.1016/j.surg.2019.01.030",
+      "doi_link": "https://doi.org/10.1016/j.surg.2019.01.030",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/30922545/",
+      "citation_count": 6
+    }
+  ]
+}
