@@ -203,8 +203,8 @@ class PubMedSearcher:
                                 doi_link = f"https://doi.org/{doi}"
                                 break
                     
-                    # Fetch citation count from Google Scholar
-                    citation_count = self.get_citation_count(doi, title)
+                    # Fetch citation count from PubMed Central
+                    citation_count = self.get_citation_count(str(pmid))
                     
                     articles.append({
                         "pmid": str(pmid),
@@ -229,62 +229,50 @@ class PubMedSearcher:
             logger.error(f"PubMed search failed: {e}")
             raise
 
-    def get_citation_count(self, doi: str, title: str) -> Optional[int]:
+    def get_citation_count(self, pmid: str) -> Optional[int]:
         """
-        Fetch citation count from Google Scholar using DOI or title.
+        Fetch citation count from NCBI PubMed Central using elink.
+        
+        This uses the official NCBI E-utilities API which is free and reliable.
         
         Args:
-            doi: DOI of the article
-            title: Title of the article (fallback if DOI fails)
+            pmid: PubMed ID of the article
         
         Returns:
             Citation count as integer, or None if not found
         """
         try:
-            # Add a small delay to be respectful to Google Scholar
-            time.sleep(2)
+            # Add a small delay to be respectful to NCBI
+            time.sleep(0.4)  # NCBI allows 3 requests/sec without API key, 10/sec with key
             
-            # Try searching by DOI first
-            if doi and doi != "N/A":
-                search_query = doi
-            else:
-                # Fallback to title search
-                search_query = title
+            # Use elink to find articles that cite this PMID
+            handle = Entrez.elink(
+                dbfrom="pubmed",
+                db="pubmed",
+                id=pmid,
+                linkname="pubmed_pubmed_citedin"  # Articles that cite this one
+            )
             
-            # Build Google Scholar search URL
-            encoded_query = quote_plus(search_query)
-            url = f"https://scholar.google.com/scholar?q={encoded_query}"
+            result = Entrez.read(handle)
+            handle.close()
             
-            # Make request with proper headers to avoid blocking
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate',
-                'Connection': 'keep-alive',
-            }
+            # Extract citation count
+            if result and len(result) > 0:
+                link_set_db = result[0].get('LinkSetDb', [])
+                if link_set_db and len(link_set_db) > 0:
+                    cited_pmids = link_set_db[0].get('Link', [])
+                    citation_count = len(cited_pmids)
+                    logger.info(f"Found {citation_count} citations for PMID {pmid}")
+                    return citation_count
             
-            response = self.session.get(url, headers=headers, timeout=10)
-            
-            if response.status_code != 200:
-                logger.warning(f"Google Scholar returned status {response.status_code}")
-                return None
-            
-            # Parse citation count from HTML
-            # Look for pattern like "Cited by 123"
-            html = response.text
-            citation_match = re.search(r'Cited by (\d+)', html)
-            
-            if citation_match:
-                citation_count = int(citation_match.group(1))
-                logger.info(f"Found {citation_count} citations for: {title[:50]}...")
-                return citation_count
-            else:
-                logger.debug(f"No citations found for: {title[:50]}...")
-                return 0
+            logger.debug(f"No citations found for PMID {pmid}")
+            return 0
                 
         except Exception as e:
-            logger.warning(f"Error fetching citation count: {e}")
+            logger.warning(f"Error fetching citation count for PMID {pmid}: {e}")
+            return None
+
+    def get_full_text_url(self, pmid: str, article: Optional[Dict] = None) -> Dict[str, Optional[str]]:
             return None
 
     def get_full_text_url(self, pmid: str, article: Optional[Dict] = None) -> Dict[str, Optional[str]]:

@@ -1,0 +1,54 @@
+91c91
+<             this.alertMessage = 'Searching PubMed (this may take 30-60 seconds)...';
+---
+>             this.alertMessage = 'Searching PubMed and fetching citation counts (this may take 2-5 minutes)...';
+96,119d95
+<             try {
+<                 // Build command arguments
+<                 const args = [
+<                     '--email', this.formData.email,
+<                     '--query', this.formData.query,
+<                     '--max-results', this.formData.maxResults.toString()
+<                 ];
+< 
+<                 if (this.formData.apiKey) {
+<                     args.push('--api-key', this.formData.apiKey);
+<                 }
+< 
+<                 if (this.formData.dateFrom) {
+<                     args.push('--date-from', this.formData.dateFrom);
+<                 }
+< 
+<                 if (this.formData.dateTo) {
+<                     args.push('--date-to', this.formData.dateTo);
+<                 }
+< 
+<                 if (this.formData.batchMode) {
+<                     args.push('--batch');
+<                 }
+< 
+120a97,102
+>             try {
+>                 // Call Python script via backend API with extended timeout
+>                 const controller = new AbortController();
+>                 const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
+> 
+121a104
+>                     signal: controller.signal
+127,128c110
+<                         dateTo: this.formData.dateTo,
+<                         batchMode: this.formData.batchMode
+---
+>                         dateTo: this.formData.dateTo
+129a112,114
+> 
+>                 clearTimeout(timeoutId);
+> 
+141c126,131
+<                 this.alertMessage = `Error: ${error.message}`;
+---
+>                 if (error.name === 'AbortError') {
+>                     this.alertMessage = 'Search timeout (>5 minutes). Try reducing max results.';
+>                 } else {
+>                     this.alertMessage = `Error: ${error.message}`;
+>                 }

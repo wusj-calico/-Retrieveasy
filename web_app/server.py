@@ -56,7 +56,7 @@ def search_pubmed():
             cmd,
             capture_output=True,
             text=True,
-            timeout=300  # 5 minute timeout (citation fetching takes ~2 sec per article)
+            timeout=180  # 3 minute timeout (PubMed API is faster: ~0.4 sec per article)
         )
         
         print(f"Return code: {result.returncode}")
