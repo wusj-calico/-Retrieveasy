@@ -56,7 +56,7 @@ def search_pubmed():
             cmd,
             capture_output=True,
             text=True,
-            timeout=180  # 3 minute timeout
+            timeout=300  # 5 minute timeout (citation fetching takes ~2 sec per article)
         )
         
         print(f"Return code: {result.returncode}")
@@ -90,7 +90,7 @@ def search_pubmed():
         })
         
     except subprocess.TimeoutExpired:
-        return jsonify({'error': 'Search timeout (>2 minutes)'}), 504
+        return jsonify({'error': 'Search timeout (>5 minutes). Try reducing max results or disable citation fetching.'}), 504
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

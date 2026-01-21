@@ -88,7 +88,7 @@ createApp({
         },
         async searchPubMed() {
             this.isLoading = true;
-            this.alertMessage = 'Searching PubMed (this may take 30-60 seconds)...';
+            this.alertMessage = 'Searching PubMed and fetching citation counts (this may take 2-5 minutes)...';
             this.alertType = 'info';
             this.results = [];
 
@@ -117,6 +117,10 @@ createApp({
                 }
 
                 // Call Python script via backend API
+                // Call Python script via backend API with extended timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
+
                 const response = await fetch('/api/search', {
                     method: 'POST',
                     headers: {
