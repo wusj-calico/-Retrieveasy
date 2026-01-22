@@ -615,7 +615,8 @@
                                     {{ sortDirection === 'asc' ? '▲' : '▼' }}
                                 </span>
                             </th>
-                            <th>Links</th>
+                            <th>DOI</th>
+                            <th>PDF</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -648,6 +649,13 @@
                                 <a v-if="article.DOI_Link !== 'N/A'" :href="article.DOI_Link" target="_blank" class="article-title">
                                     DOI
                                 </a>
+                                <span v-else style="color: #999;">-</span>
+                            </td>
+                            <td>
+                                <a v-if="article.PDF_Link !== 'N/A'" :href="article.PDF_Link" target="_blank" class="article-title" title="View PDF in Google Cloud Storage">
+                                    PDF
+                                </a>
+                                <span v-else style="color: #999;">-</span>
                             </td>
                         </tr>
                     </tbody>

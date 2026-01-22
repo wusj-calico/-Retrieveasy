@@ -206,6 +206,9 @@ class PubMedSearcher:
                     # Fetch citation count from PubMed Central
                     citation_count = self.get_citation_count(str(pmid))
                     
+                    # Generate GCS PDF link
+                    pdf_link = self.get_gcs_pdf_link(str(pmid), doi)
+                    
                     articles.append({
                         "pmid": str(pmid),
                         "title": title,
@@ -215,6 +218,7 @@ class PubMedSearcher:
                         "journal": journal,
                         "doi": doi,
                         "doi_link": doi_link,
+                        "pdf_link": pdf_link,
                         "url": f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
                         "citation_count": citation_count if citation_count is not None else "N/A"
                     })
@@ -229,6 +233,35 @@ class PubMedSearcher:
             logger.error(f"PubMed search failed: {e}")
             raise
 
+    def get_gcs_pdf_link(self, pmid: str, doi: str) -> str:
+        """
+        Generate Google Cloud Storage PDF link for an article.
+        
+        Checks if PDF exists in GCS bucket: gs://calidoscope-data-03/pubmed_pdf_kftang/
+        Tries multiple filename patterns: PMID.pdf, DOI-based.pdf
+        
+        Args:
+            pmid: PubMed ID of the article
+            doi: DOI of the article
+        
+        Returns:
+            GCS public URL if file likely exists, otherwise "N/A"
+        """
+        base_url = "https://storage.googleapis.com/calidoscope-data-03/pubmed_pdf_kftang"
+        
+        # Try PMID-based filename first
+        if pmid and pmid != "N/A":
+            pdf_url = f"{base_url}/{pmid}.pdf"
+            return pdf_url
+        
+        # Try DOI-based filename (replace / with _)
+        if doi and doi != "N/A":
+            doi_filename = doi.replace("/", "_").replace(".", "_")
+            pdf_url = f"{base_url}/{doi_filename}.pdf"
+            return pdf_url
+        
+        return "N/A"
+    
     def get_citation_count(self, pmid: str) -> Optional[int]:
         """
         Fetch citation count from NCBI PubMed Central using elink.
@@ -694,7 +727,7 @@ Examples:
         
         # Write to CSV
         with open(csv_filepath, 'w', newline='', encoding='utf-8') as csvfile:
-            fieldnames = ['PMID', 'Title', 'Citation_Count', 'Authors', 'Journal', 'Year', 'DOI', 'DOI_Link', 'PubMed_URL']
+            fieldnames = ['PMID', 'Title', 'Citation_Count', 'Authors', 'Journal', 'Year', 'DOI', 'DOI_Link', 'PDF_Link', 'PubMed_URL']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             
             writer.writeheader()
@@ -708,6 +741,7 @@ Examples:
                     'Year': article['year'],
                     'DOI': article['doi'],
                     'DOI_Link': article['doi_link'],
+                    'PDF_Link': article.get('pdf_link', 'N/A'),
                     'PubMed_URL': article['url']
                 })
         
