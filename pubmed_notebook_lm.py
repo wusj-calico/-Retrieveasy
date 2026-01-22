@@ -195,19 +195,22 @@ class PubMedSearcher:
                                 break
                     
                     # If DOI not in article, check PubmedData
-                    if doi == "N/A" and "PubmedData" in record:
+                    pmc_id = "N/A"
+                    if "PubmedData" in record:
                         article_ids = record["PubmedData"].get("ArticleIdList", [])
                         for article_id in article_ids:
-                            if article_id.attributes.get("IdType") == "doi":
+                            id_type = article_id.attributes.get("IdType")
+                            if id_type == "doi" and doi == "N/A":
                                 doi = str(article_id)
                                 doi_link = f"https://doi.org/{doi}"
-                                break
+                            elif id_type == "pmc":
+                                pmc_id = str(article_id)
                     
                     # Fetch citation count from PubMed Central
                     citation_count = self.get_citation_count(str(pmid))
                     
                     # Generate GCS PDF link
-                    pdf_link = self.get_gcs_pdf_link(str(pmid), doi)
+                    pdf_link = self.get_gcs_pdf_link(str(pmid), pmc_id)
                     
                     articles.append({
                         "pmid": str(pmid),
@@ -233,34 +236,39 @@ class PubMedSearcher:
             logger.error(f"PubMed search failed: {e}")
             raise
 
-    def get_gcs_pdf_link(self, pmid: str, doi: str) -> str:
+    def get_gcs_pdf_link(self, pmid: str, pmc_id: str) -> str:
         """
         Generate Google Cloud Storage PDF link for an article.
         
-        Checks if PDF exists in GCS bucket: gs://calidoscope-data-03/pubmed_pdf_kftang/
-        Tries multiple filename patterns: PMID.pdf, DOI-based.pdf
+        GCS bucket structure: gs://calidoscope-data-03/pubmed_pdf_kftang/{XX}/{YY}/{PMID}.{PMCID}.pdf
+        where XX = first 2 digits of PMID, YY = next 2 digits of PMID
+        
+        Example: PMID=4135, PMCID=PMC4710243
+        Path: 04/04/4135.PMC4710243.pdf
+        URL: https://storage.cloud.google.com/calidoscope-data-03/pubmed_pdf_kftang/04/04/4135.PMC4710243.pdf
         
         Args:
             pmid: PubMed ID of the article
-            doi: DOI of the article
+            pmc_id: PubMed Central ID (e.g., "PMC4710243")
         
         Returns:
-            GCS public URL if file likely exists, otherwise "N/A"
+            GCS URL if both PMID and PMC ID exist, otherwise "N/A"
         """
-        base_url = "https://storage.googleapis.com/calidoscope-data-03/pubmed_pdf_kftang"
+        if not pmid or pmid == "N/A" or not pmc_id or pmc_id == "N/A":
+            return "N/A"
         
-        # Try PMID-based filename first
-        if pmid and pmid != "N/A":
-            pdf_url = f"{base_url}/{pmid}.pdf"
-            return pdf_url
+        # Pad PMID with leading zeros to ensure at least 4 digits for directory structure
+        pmid_padded = pmid.zfill(4)
         
-        # Try DOI-based filename (replace / with _)
-        if doi and doi != "N/A":
-            doi_filename = doi.replace("/", "_").replace(".", "_")
-            pdf_url = f"{base_url}/{doi_filename}.pdf"
-            return pdf_url
+        # Extract first 2 and next 2 digits for directory structure
+        dir1 = pmid_padded[:2]
+        dir2 = pmid_padded[2:4] if len(pmid_padded) >= 4 else "00"
         
-        return "N/A"
+        # Construct the GCS URL
+        base_url = "https://storage.cloud.google.com/calidoscope-data-03/pubmed_pdf_kftang"
+        pdf_url = f"{base_url}/{dir1}/{dir2}/{pmid}.{pmc_id}.pdf"
+        
+        return pdf_url
     
     def get_citation_count(self, pmid: str) -> Optional[int]:
         """

@@ -1,8 +1,8 @@
 {
   "search_query": "CRISPR",
-  "search_date": "2026-01-22T10:28:57.793601",
-  "total_results": 3,
-  "exported_articles": 3,
+  "search_date": "2026-01-22T10:33:49.471240",
+  "total_results": 5,
+  "exported_articles": 5,
   "csv_file": "pubmed_results_CRISPR_20260122.csv",
   "articles": [
     {
@@ -14,7 +14,7 @@
       "journal": "Cells",
       "doi": "10.3390/cells13100800",
       "doi_link": "https://doi.org/10.3390/cells13100800",
-      "pdf_link": "https://storage.googleapis.com/calidoscope-data-03/pubmed_pdf_kftang/38786024.pdf",
+      "pdf_link": "https://storage.cloud.google.com/calidoscope-data-03/pubmed_pdf_kftang/38/78/38786024.PMC11119143.pdf",
       "url": "https://pubmed.ncbi.nlm.nih.gov/38786024/",
       "citation_count": 32
     },
@@ -27,7 +27,7 @@
       "journal": "Archivum immunologiae et therapiae experimentalis",
       "doi": "10.1007/s00005-016-0427-5",
       "doi_link": "https://doi.org/10.1007/s00005-016-0427-5",
-      "pdf_link": "https://storage.googleapis.com/calidoscope-data-03/pubmed_pdf_kftang/27699445.pdf",
+      "pdf_link": "https://storage.cloud.google.com/calidoscope-data-03/pubmed_pdf_kftang/27/69/27699445.PMC5434172.pdf",
       "url": "https://pubmed.ncbi.nlm.nih.gov/27699445/",
       "citation_count": 78
     },
@@ -40,9 +40,35 @@
       "journal": "Translational research : the journal of laboratory and clinical medicine",
       "doi": "10.1016/j.trsl.2015.09.008",
       "doi_link": "https://doi.org/10.1016/j.trsl.2015.09.008",
-      "pdf_link": "https://storage.googleapis.com/calidoscope-data-03/pubmed_pdf_kftang/26470680.pdf",
+      "pdf_link": "N/A",
       "url": "https://pubmed.ncbi.nlm.nih.gov/26470680/",
       "citation_count": 101
+    },
+    {
+      "pmid": "30912037",
+      "title": "Tracking CRISPR's Footprints.",
+      "abstract": "The programmable clustered regularly interspaced short palindromic repeats (CRISPR)/CRISPR-associated 9 (Cas9) and CRISPR-Cas9-derived gene editing and manipulation tools have revolutionized biomedical research over the past few years. One important category of assisting technologies in CRISPR gene editing is methods used for detecting and quantifying indels (deletions or insertions). These indels are caused by the repair of CRISPR-Cas9-introduced DNA double-stranded breaks (DBSs), known as CRIS...",
+      "authors": "Lin L, Luo Y",
+      "year": "N/A",
+      "journal": "Methods in molecular biology (Clifton, N.J.)",
+      "doi": "10.1007/978-1-4939-9170-9_2",
+      "doi_link": "https://doi.org/10.1007/978-1-4939-9170-9_2",
+      "pdf_link": "N/A",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/30912037/",
+      "citation_count": 5
+    },
+    {
+      "pmid": "27250031",
+      "title": "CRISPR/Cas9 therapeutics: a cure for cancer and other genetic diseases.",
+      "abstract": "Cancer is caused by a series of alterations in genome and epigenome mostly resulting in activation of oncogenes or inactivation of cancer suppressor genes. Genetic engineering has become pivotal in the treatment of cancer and other genetic diseases, especially the formerly-niche use of clustered regularly interspaced short palindromic repeats (CRISPR) associated with Cas9. In defining its superior use, we have followed the recent advances that have been made in producing CRISPR/Cas9 as a therapy...",
+      "authors": "Khan FA, Pandupuspitasari NS, Chun-Jie H",
+      "year": "N/A",
+      "journal": "Oncotarget",
+      "doi": "10.18632/oncotarget.9646",
+      "doi_link": "https://doi.org/10.18632/oncotarget.9646",
+      "pdf_link": "https://storage.cloud.google.com/calidoscope-data-03/pubmed_pdf_kftang/27/25/27250031.PMC5239572.pdf",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/27250031/",
+      "citation_count": 48
     }
   ]
 }
