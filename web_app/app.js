@@ -234,6 +234,10 @@ createApp({
                 return;
             }
 
+            // Show loading message
+            this.alertType = 'info';
+            this.alertMessage = `Downloading ${articlesWithPDF.length} PDFs... This may take a minute.`;
+
             // Send request to backend
             fetch('/api/download-pdfs', {
                 method: 'POST',
@@ -249,12 +253,17 @@ createApp({
             .then(response => {
                 if (!response.ok) {
                     return response.json().then(data => {
-                        throw new Error(data.error || 'Failed to create PDF zip');
+                        throw new Error(data.error || `HTTP ${response.status}: Failed to create PDF zip`);
                     });
                 }
                 return response.blob();
             })
             .then(blob => {
+                // Check if blob is actually a zip file
+                if (blob.size === 0) {
+                    throw new Error('Downloaded file is empty');
+                }
+                
                 // Create download link
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
@@ -275,11 +284,12 @@ createApp({
                 URL.revokeObjectURL(url);
                 
                 this.alertType = 'success';
-                this.alertMessage = `Downloaded ${articlesWithPDF.length} PDFs successfully!`;
+                this.alertMessage = `Successfully downloaded ${articlesWithPDF.length} PDFs as ${filename}!`;
             })
             .catch(error => {
                 this.alertType = 'error';
                 this.alertMessage = `Error downloading PDFs: ${error.message}`;
+                console.error('PDF download error:', error);
             });
         },
 

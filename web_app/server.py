@@ -13,6 +13,7 @@ import csv
 import zipfile
 import io
 import urllib.request
+import urllib.error
 from pathlib import Path
 
 app = Flask(__name__)
@@ -127,6 +128,7 @@ def download_pdfs():
             for article in selected_articles:
                 pdf_link = article.get('PDF_Link', 'N/A')
                 pmid = article.get('PMID', 'unknown')
+                pmc_id = article.get('PMC_ID', 'unknown')
                 title = article.get('Title', f'Article_{pmid}')
                 
                 # Skip if no PDF link available
@@ -135,23 +137,57 @@ def download_pdfs():
                     continue
                 
                 try:
-                    # Download the PDF
-                    pdf_filename = f"{pmid}_{title[:50].replace('/', '_').replace(' ', '_')}.pdf"
-                    pdf_data = urllib.request.urlopen(pdf_link, timeout=10).read()
+                    print(f"Attempting to download PDF for PMID {pmid} from: {pdf_link}")
                     
-                    # Add to zip file
-                    zip_file.writestr(pdf_filename, pdf_data)
-                    downloaded_count += 1
+                    # Create a request with proper headers
+                    req = urllib.request.Request(
+                        pdf_link,
+                        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+                    )
                     
+                    # Download the PDF with timeout
+                    with urllib.request.urlopen(req, timeout=15) as response:
+                        pdf_data = response.read()
+                    
+                    if pdf_data:
+                        # Create safe filename
+                        safe_title = title[:50].replace('/', '_').replace('\\', '_').replace(':', '_').replace('*', '_').replace('?', '_').replace('"', '_').replace('<', '_').replace('>', '_').replace('|', '_')
+                        pdf_filename = f"{pmid}_{safe_title}.pdf"
+                        
+                        # Add to zip file
+                        zip_file.writestr(pdf_filename, pdf_data)
+                        downloaded_count += 1
+                        print(f"Successfully downloaded PDF for PMID {pmid} ({len(pdf_data)} bytes)")
+                    else:
+                        print(f"PDF data empty for PMID {pmid}")
+                        failed_count += 1
+                    
+                except urllib.error.HTTPError as e:
+                    print(f"HTTP Error downloading PDF for PMID {pmid}: {e.code} - {e.reason}")
+                    failed_count += 1
+                except urllib.error.URLError as e:
+                    print(f"URL Error downloading PDF for PMID {pmid}: {e.reason}")
+                    failed_count += 1
                 except Exception as e:
-                    print(f"Failed to download PDF for PMID {pmid}: {e}")
+                    print(f"Failed to download PDF for PMID {pmid}: {type(e).__name__} - {e}")
                     failed_count += 1
                     continue
+        
+        # Check if any PDFs were downloaded
+        if zip_buffer.tell() == 0 and downloaded_count == 0:
+            # No PDFs downloaded, return error with count
+            return jsonify({
+                'error': f'No PDFs could be downloaded. {failed_count} articles without available PDFs.',
+                'downloaded': 0,
+                'failed': failed_count
+            }), 400
         
         # Prepare response
         zip_buffer.seek(0)
         sanitized_query = query.replace(' ', '_').replace('/', '_')[:50]
         zip_filename = f"pubmed_pdfs_{sanitized_query}.zip"
+        
+        print(f"Created zip file with {downloaded_count} PDFs, {failed_count} failed")
         
         return send_file(
             zip_buffer,
@@ -161,6 +197,7 @@ def download_pdfs():
         )
         
     except Exception as e:
+        print(f"Error in download_pdfs: {type(e).__name__} - {e}")
         return jsonify({'error': f'Failed to create PDF zip: {str(e)}'}), 500
 
 @app.route('/')
