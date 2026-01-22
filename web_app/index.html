@@ -438,7 +438,7 @@
             </div>
             <div class="header-content">
                 <h1>Retrieveasy</h1>
-                <p>Search on PubMed and export results to CSV or download article links for selected references</p>
+                <p>Search on PubMed and export results to CSV for all selected references</p>
             </div>
         </div>
 
@@ -672,16 +672,12 @@
             <div class="export-section">
                 <div>
                     <strong>Selected: {{ selectedArticles.length }} of {{ results.length }} articles</strong>
-                    <div class="helper-text">Check articles above to select which ones to download as CSV or links</div>
+                    <div class="helper-text">Check articles above to select which ones to download as CSV</div>
                 </div>
                 <div style="display: flex; gap: 12px;">
                     <button class="btn btn-primary" @click="exportToCSV" :disabled="selectedArticles.length === 0">
                         <span class="material-icons">download</span>
                         Download CSV ({{ selectedArticles.length }})
-                    </button>
-                    <button class="btn btn-primary" @click="downloadPDFZip" :disabled="selectedArticles.length === 0">
-                        <span class="material-icons">download</span>
-                        Download Links ({{ getPDFCount() }})
                     </button>
                 </div>
             </div>
