@@ -30,6 +30,13 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from urllib.parse import quote_plus
 
+# Try to import Google Cloud Storage (optional)
+try:
+    from google.cloud import storage
+    HAS_GCS = True
+except ImportError:
+    HAS_GCS = False
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -239,43 +246,55 @@ class PubMedSearcher:
 
     def get_gcs_pdf_link(self, pmid: str, pmc_id: str) -> str:
         """
-        Generate Google Cloud Storage PDF link for an article.
+        Search Google Cloud Storage bucket for PDF file by PMC_ID.
         
-        GCS bucket structure: gs://calidoscope-data-03/pubmed_pdf_kftang/{XX}/{YY}/{PMID}.{PMCID}.pdf
-        where XX = first 2 digits of PMID, YY = next 2 digits of PMID
+        Based on bucket examples:
+        - 04/04/main.PMC7057201.pdf  
+        - 04/0e/GRL-48-e2021GL092700.PMC8244059.pdf
         
-        Example: PMID=4135, PMCID=PMC4710243
-        Path: 04/04/4135.PMC4710243.pdf
-        URL: https://storage.cloud.google.com/calidoscope-data-03/pubmed_pdf_kftang/04/04/4135.PMC4710243.pdf
+        The filename pattern is: {prefix}.{PMC_ID}.pdf where prefix varies.
+        We search the bucket for any file ending with {PMC_ID}.pdf
         
         Args:
             pmid: PubMed ID of the article
-            pmc_id: PubMed Central ID (e.g., "PMC4710243")
+            pmc_id: PubMed Central ID (e.g., "PMC7057201")
         
         Returns:
-            GCS URL if both PMID and PMC ID exist, otherwise "N/A"
+            Direct GCS URL to the PDF file, or "N/A" if not found or PMC_ID unavailable
         """
-        if not pmid or pmid == "N/A":
+        if not pmc_id or pmc_id == "N/A":
             return "N/A"
         
-        # Pad PMID with leading zeros to ensure at least 4 digits for directory structure
-        pmid_padded = pmid.zfill(4)
+        if not HAS_GCS:
+            # Fallback to console search URL if GCS library not available
+            logger.warning("google-cloud-storage not installed, returning console search URL")
+            bucket_url = "https://console.cloud.google.com/storage/browser/calidoscope-data-03/pubmed_pdf_kftang"
+            return f"{bucket_url}?project=calico-calidoscope-03"
         
-        # Extract first 2 and next 2 digits for directory structure
-        dir1 = pmid_padded[:2]
-        dir2 = pmid_padded[2:4] if len(pmid_padded) >= 4 else "00"
-        
-        # Construct the GCS URL - use authenticated URL format
-        base_url = "https://storage.cloud.google.com/calidoscope-data-03/pubmed_pdf_kftang"
-        
-        # Try with PMC ID if available
-        if pmc_id and pmc_id != "N/A":
-            pdf_url = f"{base_url}/{dir1}/{dir2}/{pmid}.{pmc_id}.pdf"
-            return pdf_url
-        
-        # Fallback to PMID only (if bucket has files without PMC ID)
-        pdf_url = f"{base_url}/{dir1}/{dir2}/{pmid}.pdf"
-        return pdf_url
+        try:
+            # Initialize GCS client (uses default credentials)
+            client = storage.Client(project="calico-calidoscope-03")
+            bucket = client.bucket("calidoscope-data-03")
+            
+            # Search for files ending with the PMC_ID
+            prefix = "pubmed_pdf_kftang/"
+            blobs = bucket.list_blobs(prefix=prefix)
+            
+            search_pattern = f".{pmc_id}.pdf"
+            for blob in blobs:
+                if blob.name.endswith(search_pattern):
+                    # Found the file! Return the authenticated URL
+                    pdf_url = f"https://storage.cloud.google.com/{bucket.name}/{blob.name}"
+                    logger.info(f"Found PDF for {pmc_id}: {blob.name}")
+                    return pdf_url
+            
+            # Not found
+            logger.warning(f"PDF not found in bucket for {pmc_id}")
+            return "N/A"
+            
+        except Exception as e:
+            logger.warning(f"Error searching GCS bucket: {e}")
+            return "N/A"
     
     def get_citation_count(self, pmid: str) -> Optional[int]:
         """
