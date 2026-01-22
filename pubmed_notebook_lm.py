@@ -30,13 +30,6 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from urllib.parse import quote_plus
 
-# Try to import Google Cloud Storage (optional)
-try:
-    from google.cloud import storage
-    HAS_GCS = True
-except ImportError:
-    HAS_GCS = False
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -216,8 +209,8 @@ class PubMedSearcher:
                     # Fetch citation count from PubMed Central
                     citation_count = self.get_citation_count(str(pmid))
                     
-                    # Generate GCS PDF link
-                    pdf_link = self.get_gcs_pdf_link(str(pmid), pmc_id)
+                    # Generate PMC PDF link
+                    pdf_link = self.get_pmc_pdf_link(str(pmid), pmc_id)
                     
                     articles.append({
                         "pmid": str(pmid),
@@ -244,57 +237,31 @@ class PubMedSearcher:
             logger.error(f"PubMed search failed: {e}")
             raise
 
-    def get_gcs_pdf_link(self, pmid: str, pmc_id: str) -> str:
+    def get_pmc_pdf_link(self, pmid: str, pmc_id: str) -> str:
         """
-        Search Google Cloud Storage bucket for PDF file by PMC_ID.
+        Generate PubMed Central Open Access PDF download link.
         
-        Based on bucket examples:
-        - 04/04/main.PMC7057201.pdf  
-        - 04/0e/GRL-48-e2021GL092700.PMC8244059.pdf
+        PMC provides Open Access PDFs through their FTP service:
+        https://www.ncbi.nlm.nih.gov/pmc/tools/openftlist/
         
-        The filename pattern is: {prefix}.{PMC_ID}.pdf where prefix varies.
-        We search the bucket for any file ending with {PMC_ID}.pdf
+        Direct PDF access format:
+        https://www.ncbi.nlm.nih.gov/pmc/articles/{PMC_ID}/pdf/
         
         Args:
             pmid: PubMed ID of the article
             pmc_id: PubMed Central ID (e.g., "PMC7057201")
         
         Returns:
-            Direct GCS URL to the PDF file, or "N/A" if not found or PMC_ID unavailable
+            Direct PMC PDF download URL, or link to PMC article page if PDF unavailable
         """
         if not pmc_id or pmc_id == "N/A":
             return "N/A"
         
-        if not HAS_GCS:
-            # Fallback to console search URL if GCS library not available
-            logger.warning("google-cloud-storage not installed, returning console search URL")
-            bucket_url = "https://console.cloud.google.com/storage/browser/calidoscope-data-03/pubmed_pdf_kftang"
-            return f"{bucket_url}?project=calico-calidoscope-03"
+        # Direct link to PDF on PMC
+        # This works for Open Access articles
+        pdf_url = f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmc_id}/pdf/"
         
-        try:
-            # Initialize GCS client (uses default credentials)
-            client = storage.Client(project="calico-calidoscope-03")
-            bucket = client.bucket("calidoscope-data-03")
-            
-            # Search for files ending with the PMC_ID
-            prefix = "pubmed_pdf_kftang/"
-            blobs = bucket.list_blobs(prefix=prefix)
-            
-            search_pattern = f".{pmc_id}.pdf"
-            for blob in blobs:
-                if blob.name.endswith(search_pattern):
-                    # Found the file! Return the authenticated URL
-                    pdf_url = f"https://storage.cloud.google.com/{bucket.name}/{blob.name}"
-                    logger.info(f"Found PDF for {pmc_id}: {blob.name}")
-                    return pdf_url
-            
-            # Not found
-            logger.warning(f"PDF not found in bucket for {pmc_id}")
-            return "N/A"
-            
-        except Exception as e:
-            logger.warning(f"Error searching GCS bucket: {e}")
-            return "N/A"
+        return pdf_url
     
     def get_citation_count(self, pmid: str) -> Optional[int]:
         """
