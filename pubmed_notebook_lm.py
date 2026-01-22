@@ -241,11 +241,11 @@ class PubMedSearcher:
         """
         Generate PubMed Central Open Access PDF download link.
         
-        PMC provides Open Access PDFs through their FTP service:
-        https://www.ncbi.nlm.nih.gov/pmc/tools/openftlist/
+        PMC provides Open Access PDFs through multiple formats:
+        1. Direct PDF: https://www.ncbi.nlm.nih.gov/pmc/articles/{PMC_ID}/pdf/
+        2. Alternative format: https://www.ncbi.nlm.nih.gov/pmc/articles/{PMC_ID}/?report=reader
         
-        Direct PDF access format:
-        https://www.ncbi.nlm.nih.gov/pmc/articles/{PMC_ID}/pdf/
+        Note: Only Open Access articles are available via these links.
         
         Args:
             pmid: PubMed ID of the article
@@ -257,7 +257,7 @@ class PubMedSearcher:
         if not pmc_id or pmc_id == "N/A":
             return "N/A"
         
-        # Direct link to PDF on PMC
+        # Try the direct PDF link format first
         # This works for Open Access articles
         pdf_url = f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmc_id}/pdf/"
         

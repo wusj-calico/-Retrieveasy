@@ -1,13 +1,1 @@
-================================================================================
-PubMed Search Web App
-================================================================================
-Script location: /Users/wusj/Documents/Sandbox/coPilot/citation_branch/pubmed_notebook_lm.py
-
-🌐 Open in browser: http://localhost:5000
-
-================================================================================
- * Serving Flask app 'server'
- * Debug mode: on
-Address already in use
-Port 5000 is in use by another program. Either identify and stop that program, or start the server with a different port.
-On macOS, try searching for and disabling 'AirPlay Receiver' in System Settings.
+nohup: python: No such file or directory

@@ -225,18 +225,9 @@ createApp({
                 this.selectedArticles.includes(article.PMID)
             );
 
-            // Count available PDFs
-            const articlesWithPDF = selectedResults.filter(a => a.PDF_Link && a.PDF_Link !== 'N/A');
-            
-            if (articlesWithPDF.length === 0) {
-                this.alertType = 'error';
-                this.alertMessage = 'No selected articles have available PDFs';
-                return;
-            }
-
             // Show loading message
             this.alertType = 'info';
-            this.alertMessage = `Downloading ${articlesWithPDF.length} PDFs... This may take a minute.`;
+            this.alertMessage = `Preparing download for ${selectedResults.length} article(s)...`;
 
             // Send request to backend
             fetch('/api/download-pdfs', {
@@ -253,7 +244,7 @@ createApp({
             .then(response => {
                 if (!response.ok) {
                     return response.json().then(data => {
-                        throw new Error(data.error || `HTTP ${response.status}: Failed to create PDF zip`);
+                        throw new Error(data.error || `HTTP ${response.status}: Failed to create file`);
                     });
                 }
                 return response.blob();
@@ -273,7 +264,7 @@ createApp({
                     .replace(/\s+/g, '_')
                     .substring(0, 50);
                 const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
-                const filename = `pubmed_pdfs_${sanitizedQuery}_${date}.zip`;
+                const filename = `pubmed_articles_${sanitizedQuery}_${date}.zip`;
                 
                 link.setAttribute('href', url);
                 link.setAttribute('download', filename);
@@ -284,22 +275,27 @@ createApp({
                 URL.revokeObjectURL(url);
                 
                 this.alertType = 'success';
-                this.alertMessage = `Successfully downloaded ${articlesWithPDF.length} PDFs as ${filename}!`;
+                this.alertMessage = `✓ Downloaded ${selectedResults.length} article link(s) as ${filename}. The file contains links to access articles from PubMed/PMC.`;
             })
             .catch(error => {
                 this.alertType = 'error';
-                this.alertMessage = `Error downloading PDFs: ${error.message}`;
-                console.error('PDF download error:', error);
+                let message = error.message || 'Unknown error occurred';
+                
+                // Add context for common errors
+                if (message.includes('403') || message.includes('Forbidden')) {
+                    message += ' - Most PubMed articles require institutional access.';
+                } else if (message.includes('empty') || message.includes('No PDFs')) {
+                    message = 'Could not create download file. Please try again.';
+                }
+                
+                this.alertMessage = `Error: ${message}`;
+                console.error('Download error:', error);
             });
         },
 
         getPDFCount() {
-            // Count how many selected articles have available PDFs
-            return this.results.filter(article => 
-                this.selectedArticles.includes(article.PMID) && 
-                article.PDF_Link && 
-                article.PDF_Link !== 'N/A'
-            ).length;
+            // Count selected articles (we provide links for all of them)
+            return this.selectedArticles.length;
         },
 
         resetForm() {

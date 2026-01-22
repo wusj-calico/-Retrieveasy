@@ -14,6 +14,7 @@ import zipfile
 import io
 import urllib.request
 import urllib.error
+import datetime
 from pathlib import Path
 
 app = Flask(__name__)
@@ -111,83 +112,71 @@ def download_pdfs():
     """Download PDFs for selected articles as a zip file"""
     try:
         data = request.json
-        selected_pmids = data.get('pmids', [])
         selected_articles = data.get('articles', [])
         query = data.get('query', 'pubmed_search')
         
         if not selected_articles:
             return jsonify({'error': 'No articles selected'}), 400
         
-        # Create in-memory zip file
+        # Try to create a text file with links instead of actual PDFs
+        # This is because PMC requires JavaScript to get actual PDFs
         zip_buffer = io.BytesIO()
+        download_info = {'success': [], 'failed': [], 'restricted': [], 'links': []}
         
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            downloaded_count = 0
-            failed_count = 0
+            # Create a manifest file with all article links
+            manifest_lines = [
+                "# PubMed Article Download Links\n",
+                f"# Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n",
+                f"# Query: {query}\n",
+                f"# Total articles: {len(selected_articles)}\n",
+                "\n",
+                "## Instructions:\n",
+                "This file contains links to PubMed articles. Most articles are behind paywalls.\n",
+                "- Open Access articles: Click link to access free full-text PDF\n",
+                "- Restricted articles: Available through your institution or by purchase\n",
+                "\n",
+                "---\n\n"
+            ]
             
-            for article in selected_articles:
-                pdf_link = article.get('PDF_Link', 'N/A')
+            for idx, article in enumerate(selected_articles, 1):
                 pmid = article.get('PMID', 'unknown')
-                pmc_id = article.get('PMC_ID', 'unknown')
-                title = article.get('Title', f'Article_{pmid}')
+                pmc_id = article.get('PMC_ID', 'N/A')
+                title = article.get('Title', 'Untitled')
+                doi = article.get('DOI', 'N/A')
+                doi_link = article.get('DOI_Link', 'N/A')
+                pdf_link = article.get('PDF_Link', 'N/A')
+                pubmed_url = article.get('PubMed_URL', '')
                 
-                # Skip if no PDF link available
-                if pdf_link == 'N/A' or not pdf_link:
-                    failed_count += 1
-                    continue
+                # Build article info
+                article_info = f"{idx}. {title}\n"
+                article_info += f"   PMID: {pmid}\n"
+                if pmc_id and pmc_id != 'N/A':
+                    article_info += f"   PMC ID: {pmc_id}\n"
+                    article_info += f"   PMC Link: https://www.ncbi.nlm.nih.gov/pmc/articles/{pmc_id}/\n"
+                if doi and doi != 'N/A':
+                    article_info += f"   DOI: {doi}\n"
+                if pubmed_url:
+                    article_info += f"   PubMed: {pubmed_url}\n"
+                article_info += "\n"
                 
-                try:
-                    print(f"Attempting to download PDF for PMID {pmid} from: {pdf_link}")
-                    
-                    # Create a request with proper headers
-                    req = urllib.request.Request(
-                        pdf_link,
-                        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-                    )
-                    
-                    # Download the PDF with timeout
-                    with urllib.request.urlopen(req, timeout=15) as response:
-                        pdf_data = response.read()
-                    
-                    if pdf_data:
-                        # Create safe filename
-                        safe_title = title[:50].replace('/', '_').replace('\\', '_').replace(':', '_').replace('*', '_').replace('?', '_').replace('"', '_').replace('<', '_').replace('>', '_').replace('|', '_')
-                        pdf_filename = f"{pmid}_{safe_title}.pdf"
-                        
-                        # Add to zip file
-                        zip_file.writestr(pdf_filename, pdf_data)
-                        downloaded_count += 1
-                        print(f"Successfully downloaded PDF for PMID {pmid} ({len(pdf_data)} bytes)")
-                    else:
-                        print(f"PDF data empty for PMID {pmid}")
-                        failed_count += 1
-                    
-                except urllib.error.HTTPError as e:
-                    print(f"HTTP Error downloading PDF for PMID {pmid}: {e.code} - {e.reason}")
-                    failed_count += 1
-                except urllib.error.URLError as e:
-                    print(f"URL Error downloading PDF for PMID {pmid}: {e.reason}")
-                    failed_count += 1
-                except Exception as e:
-                    print(f"Failed to download PDF for PMID {pmid}: {type(e).__name__} - {e}")
-                    failed_count += 1
-                    continue
+                manifest_lines.append(article_info)
+                download_info['links'].append({
+                    'pmid': pmid,
+                    'pmc_id': pmc_id,
+                    'has_pmc': pmc_id != 'N/A' and pmc_id
+                })
+            
+            # Add the manifest file to zip
+            manifest_content = ''.join(manifest_lines)
+            zip_file.writestr('ARTICLE_LINKS.txt', manifest_content)
         
-        # Check if any PDFs were downloaded
-        if zip_buffer.tell() == 0 and downloaded_count == 0:
-            # No PDFs downloaded, return error with count
-            return jsonify({
-                'error': f'No PDFs could be downloaded. {failed_count} articles without available PDFs.',
-                'downloaded': 0,
-                'failed': failed_count
-            }), 400
-        
-        # Prepare response
+        # Return zip with link manifest
         zip_buffer.seek(0)
-        sanitized_query = query.replace(' ', '_').replace('/', '_')[:50]
-        zip_filename = f"pubmed_pdfs_{sanitized_query}.zip"
+        sanitized_query = query.replace(' ', '_').replace('/', '_')[:40]
+        zip_filename = f"pubmed_articles_{sanitized_query}.zip"
         
-        print(f"Created zip file with {downloaded_count} PDFs, {failed_count} failed")
+        print(f"✓ Created zip with links for {len(selected_articles)} articles")
         
         return send_file(
             zip_buffer,
@@ -197,8 +186,10 @@ def download_pdfs():
         )
         
     except Exception as e:
-        print(f"Error in download_pdfs: {type(e).__name__} - {e}")
-        return jsonify({'error': f'Failed to create PDF zip: {str(e)}'}), 500
+        print(f"ERROR in download_pdfs: {type(e).__name__} - {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Server error: {str(e)[:100]}'}), 500
 
 @app.route('/')
 def index():
