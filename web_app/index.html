@@ -585,6 +585,12 @@
                                     {{ sortDirection === 'asc' ? '▲' : '▼' }}
                                 </span>
                             </th>
+                            <th @click="sortBy('PMC_ID')" class="sortable">
+                                PMC ID
+                                <span v-if="sortColumn === 'PMC_ID'" class="sort-indicator">
+                                    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                                </span>
+                            </th>
                             <th @click="sortBy('Title')" class="sortable">
                                 Title
                                 <span v-if="sortColumn === 'Title'" class="sort-indicator">
@@ -630,6 +636,7 @@
                                 >
                             </td>
                             <td>{{ article.PMID }}</td>
+                            <td>{{ article.PMC_ID || '-' }}</td>
                             <td>
                                 <a :href="article.PubMed_URL" target="_blank" class="article-title">
                                     {{ article.Title }}

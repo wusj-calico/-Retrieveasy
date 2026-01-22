@@ -214,6 +214,7 @@ class PubMedSearcher:
                     
                     articles.append({
                         "pmid": str(pmid),
+                        "pmc_id": pmc_id if pmc_id != "N/A" else "N/A",
                         "title": title,
                         "abstract": abstract[:500] + "..." if len(abstract) > 500 else abstract,
                         "authors": ", ".join(authors[:3]),  # First 3 authors
@@ -254,7 +255,7 @@ class PubMedSearcher:
         Returns:
             GCS URL if both PMID and PMC ID exist, otherwise "N/A"
         """
-        if not pmid or pmid == "N/A" or not pmc_id or pmc_id == "N/A":
+        if not pmid or pmid == "N/A":
             return "N/A"
         
         # Pad PMID with leading zeros to ensure at least 4 digits for directory structure
@@ -264,10 +265,16 @@ class PubMedSearcher:
         dir1 = pmid_padded[:2]
         dir2 = pmid_padded[2:4] if len(pmid_padded) >= 4 else "00"
         
-        # Construct the GCS URL
+        # Construct the GCS URL - use authenticated URL format
         base_url = "https://storage.cloud.google.com/calidoscope-data-03/pubmed_pdf_kftang"
-        pdf_url = f"{base_url}/{dir1}/{dir2}/{pmid}.{pmc_id}.pdf"
         
+        # Try with PMC ID if available
+        if pmc_id and pmc_id != "N/A":
+            pdf_url = f"{base_url}/{dir1}/{dir2}/{pmid}.{pmc_id}.pdf"
+            return pdf_url
+        
+        # Fallback to PMID only (if bucket has files without PMC ID)
+        pdf_url = f"{base_url}/{dir1}/{dir2}/{pmid}.pdf"
         return pdf_url
     
     def get_citation_count(self, pmid: str) -> Optional[int]:
@@ -735,13 +742,14 @@ Examples:
         
         # Write to CSV
         with open(csv_filepath, 'w', newline='', encoding='utf-8') as csvfile:
-            fieldnames = ['PMID', 'Title', 'Citation_Count', 'Authors', 'Journal', 'Year', 'DOI', 'DOI_Link', 'PDF_Link', 'PubMed_URL']
+            fieldnames = ['PMID', 'PMC_ID', 'Title', 'Citation_Count', 'Authors', 'Journal', 'Year', 'DOI', 'DOI_Link', 'PDF_Link', 'PubMed_URL']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             
             writer.writeheader()
             for article in selected_articles:
                 writer.writerow({
                     'PMID': article['pmid'],
+                    'PMC_ID': article.get('pmc_id', 'N/A'),
                     'Title': article['title'],
                     'Citation_Count': article.get('citation_count', 'N/A'),
                     'Authors': article['authors'],
