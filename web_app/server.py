@@ -3,13 +3,16 @@
 Flask backend API for PubMed Search Web App
 """
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 import sys
 import os
 import subprocess
 import json
 import csv
+import zipfile
+import io
+import urllib.request
 from pathlib import Path
 
 app = Flask(__name__)
@@ -101,6 +104,64 @@ def health_check():
         'status': 'healthy',
         'script_exists': PUBMED_SCRIPT.exists()
     })
+
+@app.route('/api/download-pdfs', methods=['POST'])
+def download_pdfs():
+    """Download PDFs for selected articles as a zip file"""
+    try:
+        data = request.json
+        selected_pmids = data.get('pmids', [])
+        selected_articles = data.get('articles', [])
+        query = data.get('query', 'pubmed_search')
+        
+        if not selected_articles:
+            return jsonify({'error': 'No articles selected'}), 400
+        
+        # Create in-memory zip file
+        zip_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            downloaded_count = 0
+            failed_count = 0
+            
+            for article in selected_articles:
+                pdf_link = article.get('PDF_Link', 'N/A')
+                pmid = article.get('PMID', 'unknown')
+                title = article.get('Title', f'Article_{pmid}')
+                
+                # Skip if no PDF link available
+                if pdf_link == 'N/A' or not pdf_link:
+                    failed_count += 1
+                    continue
+                
+                try:
+                    # Download the PDF
+                    pdf_filename = f"{pmid}_{title[:50].replace('/', '_').replace(' ', '_')}.pdf"
+                    pdf_data = urllib.request.urlopen(pdf_link, timeout=10).read()
+                    
+                    # Add to zip file
+                    zip_file.writestr(pdf_filename, pdf_data)
+                    downloaded_count += 1
+                    
+                except Exception as e:
+                    print(f"Failed to download PDF for PMID {pmid}: {e}")
+                    failed_count += 1
+                    continue
+        
+        # Prepare response
+        zip_buffer.seek(0)
+        sanitized_query = query.replace(' ', '_').replace('/', '_')[:50]
+        zip_filename = f"pubmed_pdfs_{sanitized_query}.zip"
+        
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=zip_filename
+        )
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to create PDF zip: {str(e)}'}), 500
 
 @app.route('/')
 def index():

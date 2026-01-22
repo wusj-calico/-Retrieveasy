@@ -213,6 +213,85 @@ createApp({
             this.alertMessage = `CSV file "${filename}" with ${this.selectedArticles.length} articles downloaded successfully!`;
         },
 
+        downloadPDFZip() {
+            if (this.selectedArticles.length === 0) {
+                this.alertType = 'error';
+                this.alertMessage = 'Please select at least one article to download';
+                return;
+            }
+
+            // Filter results to only include selected articles
+            const selectedResults = this.results.filter(article => 
+                this.selectedArticles.includes(article.PMID)
+            );
+
+            // Count available PDFs
+            const articlesWithPDF = selectedResults.filter(a => a.PDF_Link && a.PDF_Link !== 'N/A');
+            
+            if (articlesWithPDF.length === 0) {
+                this.alertType = 'error';
+                this.alertMessage = 'No selected articles have available PDFs';
+                return;
+            }
+
+            // Send request to backend
+            fetch('/api/download-pdfs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    pmids: this.selectedArticles,
+                    articles: selectedResults,
+                    query: this.formData.query
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to create PDF zip');
+                    });
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Create download link
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                
+                const sanitizedQuery = this.formData.query
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/\s+/g, '_')
+                    .substring(0, 50);
+                const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
+                const filename = `pubmed_pdfs_${sanitizedQuery}_${date}.zip`;
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                this.alertType = 'success';
+                this.alertMessage = `Downloaded ${articlesWithPDF.length} PDFs successfully!`;
+            })
+            .catch(error => {
+                this.alertType = 'error';
+                this.alertMessage = `Error downloading PDFs: ${error.message}`;
+            });
+        },
+
+        getPDFCount() {
+            // Count how many selected articles have available PDFs
+            return this.results.filter(article => 
+                this.selectedArticles.includes(article.PMID) && 
+                article.PDF_Link && 
+                article.PDF_Link !== 'N/A'
+            ).length;
+        },
+
         resetForm() {
             this.formData = {
                 email: '',

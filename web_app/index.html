@@ -672,12 +672,18 @@
             <div class="export-section">
                 <div>
                     <strong>Selected: {{ selectedArticles.length }} of {{ results.length }} articles</strong>
-                    <div class="helper-text">Check articles above to select which ones to download as CSV</div>
+                    <div class="helper-text">Check articles above to select which ones to download as CSV or PDF</div>
                 </div>
-                <button class="btn btn-primary" @click="exportToCSV" :disabled="selectedArticles.length === 0">
-                    <span class="material-icons">download</span>
-                    Download CSV ({{ selectedArticles.length }})
-                </button>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-primary" @click="exportToCSV" :disabled="selectedArticles.length === 0">
+                        <span class="material-icons">download</span>
+                        Download CSV ({{ selectedArticles.length }})
+                    </button>
+                    <button class="btn btn-primary" @click="downloadPDFZip" :disabled="selectedArticles.length === 0">
+                        <span class="material-icons">download</span>
+                        Download PDFs ({{ getPDFCount() }})
+                    </button>
+                </div>
             </div>
         </div>
     </div>
